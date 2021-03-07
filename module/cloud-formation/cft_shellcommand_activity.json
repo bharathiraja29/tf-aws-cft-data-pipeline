@@ -1,0 +1,170 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Description": "Stack for creating datapipeline for shellcommandactivity",
+  "Resources": {
+    "ShellCommandActivity": {
+      "Type": "AWS::DataPipeline::Pipeline",
+      "Properties": {
+        "Activate": false,
+        "Description": "DataPipeline to run a python script.",
+        "Name": "PythonScriptExecutor",
+        "ParameterObjects": [
+          {
+            "Attributes": [
+              {
+                "Key": "description",
+                "StringValue": "S3 input folder"
+              },
+              {
+                "Key": "type",
+                "StringValue": "AWS::S3::ObjectKey"
+              }
+            ],
+            "Id": "myS3InputLoc"
+          },
+          {
+            "Id": "myS3OutputLoc",
+            "Attributes": [
+              {
+                "Key": "description",
+                "StringValue": "S3 output folder"
+              },
+              {
+                "Key": "type",
+                "StringValue": "AWS::S3::ObjectKey"
+              }
+            ]
+          },
+          {
+            "Id": "myShellCmd",
+            "Attributes": [
+              {
+                "Key": "description",
+                "StringValue": "Shell command to run"
+              },
+              {
+                "Key": "type",
+                "StringValue": "String"
+              }
+            ]
+          }
+        ],
+        "ParameterValues": [
+          {
+            "Id": "myS3InputLoc",
+            "StringValue": "${input_file_s3_path}"
+          },
+          {
+            "Id": "myS3OutputLoc",
+            "StringValue": "${output_s3_path}"
+          },
+          {
+            "Id": "myShellCmd",
+            "StringValue": "python $${INPUT1_STAGING_DIR} > $${OUTPUT1_STAGING_DIR}/output.txt"
+          }
+        ],
+        "PipelineObjects": [
+          {
+            "Name": "EC2ResourceObj",
+            "Id": "EC2ResourceObj",
+            "Fields": [
+              {
+                "Key": "type",
+                "StringValue": "Ec2Resource"
+              },
+              {
+                "Key": "instanceType",
+                "StringValue": "t1.micro"
+              },
+              {
+                "Key": "terminateAfter",
+                "StringValue": "20 Minutes"
+              }
+            ]
+          },
+          {
+            "Id": "Default",
+            "Name": "Default",
+            "Fields": [
+              {
+                "Key": "failureAndRerunMode",
+                "StringValue": "CASCADE"
+              },
+              {
+                "Key": "resourceRole",
+                "StringValue": "DataPipelineDefaultResourceRole"
+              },
+             {
+               "Key": "role",
+                "StringValue": "DataPipelineDefaultRole"
+              },
+              {
+                "Key": "scheduleType",
+                "StringValue": "ONDEMAND"
+              }
+            ]
+          },
+          {
+            "Name": "S3InputLocation",
+            "Id": "S3InputLocation",
+            "Fields": [
+              {
+                "Key": "type",
+                "StringValue": "S3DataNode"
+              },
+              {
+                "Key": "directoryPath",
+                "StringValue": "#{myS3InputLoc}"
+              }
+            ]
+
+          },
+          {
+            "Name": "S3OutputLocation",
+            "Id": "S3OutputLocation",
+            "Fields": [
+              {
+                "Key": "type",
+                "StringValue": "S3DataNode"
+              },
+              {
+                "Key": "directoryPath",
+                "StringValue": "#{myS3OutputLoc}"
+              }
+            ]
+          },
+          {
+            "Name": "ShellCommandActivityObj",
+            "Id": "ShellCommandActivityObj",
+            "Fields": [
+              {
+                "Key": "output",
+                "RefValue": "S3OutputLocation"
+              },
+              {
+                "Key": "input",
+                "RefValue": "S3InputLocation"
+              },
+              {
+                "Key": "stage",
+                "StringValue": "true"
+              },
+              {
+                "Key": "type",
+                "StringValue": "ShellCommandActivity"
+              },
+              {
+                "Key": "command",
+                "StringValue": "#{myShellCmd}"
+              },
+              {
+                "Key": "runsOn",
+                "RefValue": "EC2ResourceObj"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+*.terraform
+.terraform
+*.tfstate
+*.backup
+*.bkp
+.project
+# this is for testing terraform modules
+sandbox/*
+venv/
+venve/
+__pycache__/
+
+*.DS_Store
